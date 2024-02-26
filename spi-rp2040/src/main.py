@@ -71,7 +71,7 @@ print('Starting forever loop...')
 try:
     buffer: list[int] = []
     while True:
-        if receive_sm.rx_fifo():
+        while receive_sm.rx_fifo():
             buffer.append(receive_sm.get())
             
         if spi_cs_pin.value() and len(buffer):
