@@ -1,4 +1,4 @@
-from machine import Pin, UART, SPI
+from machine import Pin, UART
 from neopixel import NeoPixel
 from time import sleep
 
@@ -62,8 +62,6 @@ redpin = Pin(6, mode=Pin.IN, pull=Pin.PULL_UP)
 bluebutton = PushButton(bluepin, PushButtonCommand(uart, neo, (0, 0, 128)))
 redbutton = PushButton(redpin, PushButtonCommand(uart, neo, (0, 128, 0)))
 
-b: bytes = 0x00
-spi = SPI()
 try:
 
     while True:
