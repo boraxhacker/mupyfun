@@ -1,6 +1,24 @@
-from machine import Pin, SPI, mem32
+from machine import Pin
+from rp2 import PIO, StateMachine, asm_pio
 from neopixel import NeoPixel
-from time import sleep
+
+###
+# WARNING FM - clocked input code for PIO
+###
+@asm_pio(autopush=True,push_thresh=8,in_shiftdir=PIO.SHIFT_LEFT, fifo_join=PIO.JOIN_RX)
+def spi_recv():
+    label("start")
+    jmp("check_cs") # if chip select is low, continue, otherwise jump to check_cs
+
+    wrap_target()
+    wait(0, pins, 2)
+    wait(1, pins, 2)
+    in_(pins, 1)
+
+    label("check_cs")
+    jmp(pin, "start") # if chip select is high, go to 'start' state
+
+
 
 COLOR_OFF = (0, 0, 0)
 COLOR_RED = (0, 128, 0)
@@ -33,73 +51,38 @@ class BlueCommand:
         self.neo.write()
 
 
-SPI0_BASE = 0x4003c000
-#SSPRXD
-SSPCR0 = 0x000
-SSPCR1 = 0x004
-SSPDR = 0x008
-SSPSR = 0x00c
-
-
-def any():
-    # get IC_STATUS
-    status = mem32[SPI0_BASE | SSPSR]
-
-    # check RFNE receive fifio not empty
-    if status & 0x0c:
-        return True
-    return False
-
-def get():
-    while not any():
-        pass
-    return mem32[SPI0_BASE | SSPDR] & 0xff
-
-
-def csel_handler(spi, pin):
-    
-    print(f'Reading command [CS: {pin}]...')
-    count = 0
-    buffer: list[int] = []
-    while any():
-        buffer.append(get())
-        #buffer.append(spi.read(1))
-        count = count + 1
-
-    print('Yo BuffBoy', buffer, count)
-    
-
 neo = NeoPixel(Pin(16), 1)
 bluecmd = BlueCommand(neo)
 redcmd = RedCommand(neo)
 
 print('Initializing SPI...')
 
-slval = mem32[SPI0_BASE | SSPCR1]
-print('Value-Before', hex(slval))
+# spi pin mappings, and frequency
+spi_baudrate = 115200*16
+spi_cs_pin = Pin(1, Pin.IN, Pin.PULL_UP)
+spi_clk_pin = Pin(2, Pin.IN, Pin.PULL_UP)
+spi_rx_pin = Pin(4, Pin.IN, Pin.PULL_UP)
 
-#spi = SPI(0, baudrate=9600, sck=Pin(2), mosi=Pin(3), miso=Pin(4))
-
-mem32[SPI0_BASE | SSPCR0] = mem32[SPI0_BASE | SSPCR0] & 0xff27 | 0x27
-
-print('SSPCR0', hex(mem32[SPI0_BASE | SSPCR0] & 0xff))
-
-mem32[SPI0_BASE | SSPCR1] = slval & 0xff06 | 0x06
-slval = mem32[SPI0_BASE | SSPCR1]
-print('Value-After', hex(slval))
-
-csel = Pin(1, Pin.IN)
-#csel.irq(trigger=Pin.IRQ_FALLING, handler=lambda p : csel_handler(spi, p))
-csel.irq(trigger=Pin.IRQ_FALLING, handler=lambda p : csel_handler(None, p))
+# Receive bytes from master when using spi.write() on master
+receive_sm = StateMachine(0, spi_recv, freq=spi_baudrate, in_base=(spi_rx_pin), jmp_pin=(spi_clk_pin))
+receive_sm.active(1)
 
 print('Starting forever loop...')
 try:
-
-    buffer = []
-
+    buffer: list[int] = []
     while True:
-        sleep(60)
-        print('bump-bump')
+        if receive_sm.rx_fifo():
+            buffer.append(receive_sm.get())
+            
+        if spi_cs_pin.value() and len(buffer):
+            command = bytes(buffer).decode('utf-8')
+            if command == 'GO_COMMAND_RED':
+                redcmd.execute()
+            elif command == 'GO_COMMAND_BLUE':
+                bluecmd.execute()
+                
+            print(command)
+            buffer = []
 
 finally:
 
