@@ -53,7 +53,7 @@ print('Starting forever loop...')
 try:
 
     spi.open(0, 0)
-    spi.max_speed_hz = 9600
+    spi.max_speed_hz = 100_000
     spi.mode = 0x1
 
     while True:
