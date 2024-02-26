@@ -57,8 +57,8 @@ redcmd = RedCommand(neo)
 
 print('Initializing SPI...')
 
-# spi pin mappings, and frequency
-spi_baudrate = 115200*16
+# spi pin mappings, and frequency (times 16 bits?)
+spi_baudrate = 100_000 * 16
 spi_cs_pin = Pin(1, Pin.IN, Pin.PULL_UP)
 spi_clk_pin = Pin(2, Pin.IN, Pin.PULL_UP)
 spi_rx_pin = Pin(4, Pin.IN, Pin.PULL_UP)
