@@ -8,4 +8,4 @@ https://github.com/raspberrypi/pico-examples/blob/33854562cd08398c4b48bb1ed7fa02
 https://www.digikey.com/en/maker/projects/raspberry-pi-pico-rp2040-spi-example-with-micropython-and-cc/9706ea0cf3784ee98e35ff49188ee045
 
 
-
+https://www.circuitstate.com/tutorials/making-two-raspberry-pi-pico-boards-communicate-through-spi-using-c-cpp-sdk/
