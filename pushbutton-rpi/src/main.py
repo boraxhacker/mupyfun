@@ -17,6 +17,8 @@ def btnblue_pressed_handler():
 
 
 def btnblue_released_handler():
+    print(list(b'GO_COMMAND_BLUE_OFF'))
+    spi.writebytes(list(b'GO_COMMAND_OFF'))
     ledblue.off()
 
 
@@ -27,6 +29,8 @@ def btnred_pressed_handler():
 
 
 def btnred_released_handler():
+    print(list(b'GO_COMMAND_RED_OFF'))
+    spi.writebytes(list(b'GO_COMMAND_OFF'))
     ledred.off()
 
 
